@@ -3,9 +3,10 @@ const cors = require('cors');
 const monk = require('monk');
 const Filter = require('bad-words');
 const ExpressRateLimiter = require('express-rate-limit');
+const port = process.env.PORT || 5000;
 
 // connect to db using monk (creats db/collection if not found)
-const db = monk('localhost/xpiraldb');
+const db = monk(process.env.MONGO_URI || 'localhost/xpiraldb');
 // get collection
 const xpiralsCollection = db.get('xpirals');
 // setup filter
@@ -70,6 +71,6 @@ app.post('/tweet', (req, resp) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log('listening on 5000');
+app.listen(port, () => {
+  console.log('listening on ', port);
 });
