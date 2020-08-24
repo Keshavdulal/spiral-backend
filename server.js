@@ -1,11 +1,20 @@
 const express = require('express');
 const cors = require('cors');
 const monk = require('monk');
+const Filter = require('bad-words');
+const ExpressRateLimiter = require('express-rate-limit');
 
 // connect to db using monk (creats db/collection if not found)
 const db = monk('localhost/xpiraldb');
-// collection
+// get collection
 const xpiralsCollection = db.get('xpirals');
+// setup filter
+const filter = new Filter();
+// setup rate limiter
+const rateLimiter = new ExpressRateLimiter({
+  windowMs: 5 * 60 * 1000,
+  max: 5,
+});
 
 // create an instance of express;
 const app = express();
@@ -29,13 +38,22 @@ app.get('/', (req, resp) => {
   });
 });
 
+app.get('/tweet', (req, resp) => {
+  xpiralsCollection.find().then((data) => {
+    resp.json(data);
+  });
+});
+
+// rate limit to post
+app.use(rateLimiter);
+
 app.post('/tweet', (req, resp) => {
   console.log(req.body, typeof req.body);
   if (isValidTweet(req.body)) {
     // insert into db; stringify to prvent injection
     const tweet = {
-      name: req.body.name.toString(),
-      tweet: req.body.tweet.toString(),
+      name: filter.clean(req.body.name.toString()),
+      tweet: filter.clean(req.body.tweet.toString()),
       created: new Date(),
     };
     xpiralsCollection.insert(tweet).then((createdTweet) => {
@@ -50,8 +68,8 @@ app.post('/tweet', (req, resp) => {
       message: 'Invalid Request! Try Again!',
     });
   }
-  // resp.send
 });
+
 app.listen(5000, () => {
   console.log('listening on 5000');
 });
