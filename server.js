@@ -3,10 +3,12 @@ const cors = require('cors');
 const monk = require('monk');
 const Filter = require('bad-words');
 const ExpressRateLimiter = require('express-rate-limit');
+require('dotenv').config();
+
 const port = process.env.PORT || 5000;
 
 // connect to db using monk (creats db/collection if not found)
-const db = monk(process.env.MONGO_URI || 'localhost/xpiraldb');
+const db = monk(process.env.MONGODB_URI || 'localhost/xpiraldb');
 // get collection
 const xpiralsCollection = db.get('xpirals');
 // setup filter
