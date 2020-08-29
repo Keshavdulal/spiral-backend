@@ -42,8 +42,31 @@ app.get('/', (req, resp) => {
 });
 
 app.get('/tweet', (req, resp) => {
-  xpiralsCollection.find().then((data) => {
-    resp.json(data);
+  // console.log('@get /tweet ', req.query);
+  let { skip, limit, sort = 'desc' } = req.query;
+  skip = Number(skip) || 0;
+  limit = Number(limit) || 5;
+  limit = limit > 50 ? 50 : limit;
+
+  Promise.all([
+    // get total no of item
+    xpiralsCollection.count(),
+    // get requested items
+    xpiralsCollection.find(
+      {},
+      { skip, limit, sort: { created: sort === 'desc' ? -1 : 1 } }
+    ),
+  ]).then(([total, xpirals]) => {
+    resp.json({
+      meta: {
+        total,
+        skip,
+        limit,
+        remaining: total - (skip + limit),
+        has_more: total - (skip + limit) > 0,
+      },
+      xpirals,
+    });
   });
 });
 
@@ -51,7 +74,7 @@ app.get('/tweet', (req, resp) => {
 app.use(rateLimiter);
 
 app.post('/tweet', (req, resp) => {
-  console.log(req.body, typeof req.body);
+  // console.log(req.body, typeof req.body);
   if (isValidTweet(req.body)) {
     // insert into db; stringify to prvent injection
     const tweet = {
@@ -60,7 +83,7 @@ app.post('/tweet', (req, resp) => {
       created: new Date(),
     };
     xpiralsCollection.insert(tweet).then((createdTweet) => {
-      console.log('🌈 xpiral inserted');
+      // console.log('🌈 xpiral inserted');
       resp.json(createdTweet);
     });
   } else {
