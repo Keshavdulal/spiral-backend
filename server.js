@@ -8,9 +8,9 @@ require('dotenv').config();
 const port = process.env.PORT || 5000;
 
 // connect to db using monk (creats db/collection if not found)
-const db = monk(process.env.MONGODB_URI || 'localhost/xpiraldb');
+const db = monk(process.env.MONGODB_URI || 'localhost/spiraldb');
 // get collection
-const xpiralsCollection = db.get('xpirals');
+const spiralsCollection = db.get('spirals');
 // setup filter
 const filter = new Filter();
 // setup rate limiter
@@ -50,13 +50,13 @@ app.get('/tweet', (req, resp) => {
 
   Promise.all([
     // get total no of item
-    xpiralsCollection.count(),
+    spiralsCollection.count(),
     // get requested items
-    xpiralsCollection.find(
+    spiralsCollection.find(
       {},
       { skip, limit, sort: { created: sort === 'desc' ? -1 : 1 } }
     ),
-  ]).then(([total, xpirals]) => {
+  ]).then(([total, spirals]) => {
     resp.json({
       meta: {
         total,
@@ -65,7 +65,7 @@ app.get('/tweet', (req, resp) => {
         remaining: total - (skip + limit),
         has_more: total - (skip + limit) > 0,
       },
-      xpirals,
+      spirals,
     });
   });
 });
@@ -82,8 +82,8 @@ app.post('/tweet', (req, resp) => {
       tweet: filter.clean(req.body.tweet.toString()),
       created: new Date(),
     };
-    xpiralsCollection.insert(tweet).then((createdTweet) => {
-      // console.log('🌈 xpiral inserted');
+    spiralsCollection.insert(tweet).then((createdTweet) => {
+      // console.log('🌈 spiral inserted');
       resp.json(createdTweet);
     });
   } else {
